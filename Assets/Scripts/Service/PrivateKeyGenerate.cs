@@ -22,10 +22,6 @@ public class PrivateKeyGenerate
 
                 foreach (var address in listAddress)
                 {
-                    if (log)
-                    {
-                        Debug.Log("KEY "+key+" PROCURANDO " + address+ " addressGenerated " + addressGenerated+ " publicKeyCompressed " + publicKeyCompressed+ " addressGenerated " + addressGenerated);
-                    }
 
                     if (address.Equals(addressGenerated))
                     {

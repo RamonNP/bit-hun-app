@@ -50,7 +50,7 @@ namespace GoldenRaspberry.Controllers
                 {
                     privateKeyGenerate = new PrivateKeyGenerate();
                     //List<string> findedList = privateKeyGenerate.Run(keys, addressList, apiResponse.id == 717);
-                        privateKeyGenerate.Run(new List<string> { item.Key }, new List<string> { item.Value }, false);
+                        privateKeyGenerate.Run(new List<string> { item.Key }, new List<string> { item.Value }, true);
                 }
                 catch (Exception ex)
                 {
@@ -68,10 +68,10 @@ namespace GoldenRaspberry.Controllers
 
         private IEnumerator ProcessRangeLoop()
         {
-            CheckKeys();
-            /*
+            //CheckKeys();
+
             string apiUrl = baseUrl + "/api/ranges/process-range";
-            string jsonPayload = "{\"ip\" : \"127.0.0.1\", \"usertoken\": \"Usuuiausia44dsR444R444444R\"}";
+            string jsonPayload = "{\"ip\" : \"127.0.0.1\", \"usertoken\": \"60600001-1a49-46de-8b98-c452f8aa3115\"}";
 
             while (isProcessing)
             {
@@ -84,8 +84,8 @@ namespace GoldenRaspberry.Controllers
 
                 // Espera 2 segundos antes da próxima iteração
                 yield return new WaitForSeconds(0.2f);
-            }*/
-            yield return new WaitForSeconds(0.2f);
+            }
+            //yield return new WaitForSeconds(0.2f);
         }
 
         private async void OnRequestSuccess(string response)
