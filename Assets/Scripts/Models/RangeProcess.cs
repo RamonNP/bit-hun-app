@@ -24,6 +24,12 @@ namespace GoldenRaspberry.Models
         public string bitcoinAddress;
         public bool status;
     }
+    public class Win
+    {
+        public string keyWin;
+        public string address;
+        public string privateKeyHex;
+    }
 
     [Serializable]
     public class NoWinDataPayload

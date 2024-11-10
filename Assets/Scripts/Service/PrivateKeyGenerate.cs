@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using GoldenRaspberry.Models;
 using UnityEngine;
 
 public class PrivateKeyGenerate
@@ -8,9 +9,10 @@ public class PrivateKeyGenerate
     /*
         Método que valida a chave privada para descobrir se ela corresponde a um endereço desejado.
     */
-    public List<string> Run(List<string> listKeys, List<string> listAddress, bool log)
+    public List<Win> Run(List<string> listKeys, List<string> listAddress, bool log)
     {
-        List<string> finded = new List<string>();
+        List<Win> finded = new List<Win>();
+        int i = 0;
         foreach (var key in listKeys)
         {
             try
@@ -19,6 +21,20 @@ public class PrivateKeyGenerate
                 string wifPrivateKey = KeyUtils.PrivateKeyToWIF(key); // Importa na carteira para movimentar, se der certo precisa dessa chave
                 byte[] publicKeyCompressed = KeyUtils.PrivateKeyToCompressedPublicKey(privateKeyHex);
                 string addressGenerated = KeyUtils.PublicKeyToLegacyCompressedAddress(publicKeyCompressed);
+                if ("0000000000000000000000000000000000000000000000000000000000000001" == privateKeyHex)
+                {
+                    Debug.Log(privateKeyHex);
+                    Debug.Log(publicKeyCompressed);
+                    Debug.Log(addressGenerated);
+                    //Debug.Log(address);
+                }
+                if ("0000000000000000000000000000000000000000000000000000000000000003" == privateKeyHex)
+                {
+                    Debug.Log(privateKeyHex);
+                    Debug.Log(publicKeyCompressed);
+                    Debug.Log(addressGenerated);
+                    //Debug.Log(address);
+                }
 
                 foreach (var address in listAddress)
                 {
@@ -29,7 +45,12 @@ public class PrivateKeyGenerate
                         // ENVIAR ISSO -> wifPrivateKey
                         Debug.Log($"Chave válida encontrada! WIF: {wifPrivateKey}");
                         //return; // Opcional: sair da função ao encontrar uma chave válida
-                        finded.Add(wifPrivateKey);
+                        Win win = new Win();
+                        win.keyWin = wifPrivateKey;
+                        win.address = address;
+                        win.privateKeyHex = privateKeyHex;
+                        finded.Add(win);
+                        Debug.Log("CHAVE ADICIONADA");
                     }
                 }
             }
