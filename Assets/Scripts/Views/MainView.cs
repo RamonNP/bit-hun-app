@@ -10,7 +10,11 @@ namespace GoldenRaspberry.Views
     {
         public Button startButton;
         public Button stopButton;  // Botão de parada
-        public TextMeshProUGUI resultText;
+        public TextMeshProUGUI status;
+        public TextMeshProUGUI user;
+        public TextMeshProUGUI process;
+        public TextMeshProUGUI range;
+        public TextMeshProUGUI count;
 
         [SerializeField] private TMP_InputField usernameInputField; // Campo para o nome de usuário
 
@@ -52,7 +56,15 @@ namespace GoldenRaspberry.Views
 
         public void UpdateResultText(string text)
         {
-            resultText.text = text;
+            status.text = text;
+        }
+
+        public void UpdateResultText(string userS, string processS, string rangeS, string countS)
+        {
+            user.text = "User:"+userS;
+            process.text = "ProcessS:"+processS;
+            range.text = "Range:"+rangeS;
+            count.text = "Count:"+countS;
         }
 
         private void ValidateInput(string inputText)

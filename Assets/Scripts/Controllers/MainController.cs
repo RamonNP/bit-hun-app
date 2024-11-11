@@ -36,7 +36,7 @@ namespace GoldenRaspberry.Controllers
             if (!isProcessing)
             {
                 isProcessing = true;
-                view.UpdateResultText("Processando...");
+                view.UpdateResultText("Process...");
                 apiService.StartCoroutine(ProcessRangeLoop(user));
             }
         }
@@ -92,6 +92,7 @@ namespace GoldenRaspberry.Controllers
         private async void OnRequestSuccess(string response)
         {
             RangeProcess apiResponse = JsonUtility.FromJson<RangeProcess>(response);
+            view.UpdateResultText(apiResponse.userToken, apiResponse.id.ToString(), apiResponse.initialRange, apiResponse.quantity.ToString());
 
             string resultText = $"Response:\n" +
                     $"ID: {apiResponse.id}\n" +
@@ -111,11 +112,11 @@ namespace GoldenRaspberry.Controllers
                                                        .Select(p => p.bitcoinAddress)
                                                        .ToList();
 
-    // Imprime a lista de keys
-    //Debug.Log("Keys: " + string.Join(", ", keys));
+                // Imprime a lista de keys
+                //Debug.Log("Keys: " + string.Join(", ", keys));
 
-    // Imprime a lista de addressList
-    //Debug.Log("Address List: " + string.Join(", ", addressList));
+                // Imprime a lista de addressList
+                //Debug.Log("Address List: " + string.Join(", ", addressList));
                 privateKeyGenerate = new PrivateKeyGenerate();
                 List<Win> findedList = privateKeyGenerate.Run(keys, addressList, apiResponse.id == 717);
                 return findedList;
@@ -127,14 +128,12 @@ namespace GoldenRaspberry.Controllers
                 Debug.Log("ACHOUUUUUUUU");
                 SendWinData(returned, apiResponse.id);
             }
-            else
-            {
 
-                SendNoWinData(apiResponse);
-            }
+            SendNoWinData(apiResponse);
 
             isCalling = true;
-            view.UpdateResultText(resultText);
+
+            //view.UpdateResultText(apiResponse.userToken, apiResponse.id.ToString(), apiResponse.initialRange, apiResponse.quantity.ToString());
             //TODO QUANDO CHEGAR AQUI Spownar na tela um objeto que vou arratar para o campo, mostre apenas alteração
 
         }
