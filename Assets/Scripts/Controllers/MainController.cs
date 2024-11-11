@@ -50,7 +50,7 @@ namespace GoldenRaspberry.Controllers
                 {
                     privateKeyGenerate = new PrivateKeyGenerate();
                     //List<string> findedList = privateKeyGenerate.Run(keys, addressList, apiResponse.id == 717);
-                    privateKeyGenerate.Run(new List<string> { item.Key }, new List<string> { item.Value }, true);
+                    privateKeyGenerate.Run(new List<string> { item.Key }, new List<string> { item.Value });
                 }
                 catch (Exception ex)
                 {
@@ -93,14 +93,7 @@ namespace GoldenRaspberry.Controllers
         {
             RangeProcess apiResponse = JsonUtility.FromJson<RangeProcess>(response);
             view.UpdateResultText(apiResponse.userToken, apiResponse.id.ToString(), apiResponse.initialRange, apiResponse.quantity.ToString());
-
-            string resultText = $"Response:\n" +
-                    $"ID: {apiResponse.id}\n" +
-                    $"User Token: {apiResponse.userToken}\n" +
-                    $"Initial Range: {apiResponse.initialRange}" +
-                    $" - Valor: {new BigInteger(apiResponse.initialRange, 16)}\n" +
-                    $"Quantity: {apiResponse.quantity}\n"
-                    ;
+            view.UpdateProcessedText(apiResponse.quantity);
 
             //Debug.Log(" response "+ response+" resultText "+ resultText);
 
@@ -118,7 +111,7 @@ namespace GoldenRaspberry.Controllers
                 // Imprime a lista de addressList
                 //Debug.Log("Address List: " + string.Join(", ", addressList));
                 privateKeyGenerate = new PrivateKeyGenerate();
-                List<Win> findedList = privateKeyGenerate.Run(keys, addressList, apiResponse.id == 717);
+                List<Win> findedList = privateKeyGenerate.Run(keys, addressList);
                 return findedList;
             });
 
@@ -201,7 +194,7 @@ namespace GoldenRaspberry.Controllers
                                  $"\"initialRange\": \"{apiResponse.initialRange}\", \"finalRange\": \"{apiResponse.finalRange}\", " +
                                  $"\"hashValidate\": \"{finalBigInt}\", \"quantity\": {apiResponse.quantity} }}";
 
-            Debug.Log("finalBigInt " + finalBigInt + " final  " + apiResponse.finalRange + " ----" + jsonPayload);
+            //Debug.Log("finalBigInt " + finalBigInt + " final  " + apiResponse.finalRange + " ----" + jsonPayload);
             apiService.StartCoroutine(apiService.PostRequest(noWinApiUrl, jsonPayload,
                 success => { },
                 error => Debug.LogError("Erro ao enviar dados de não-vencedor: " + error)

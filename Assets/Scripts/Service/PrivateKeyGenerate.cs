@@ -9,10 +9,9 @@ public class PrivateKeyGenerate
     /*
         Método que valida a chave privada para descobrir se ela corresponde a um endereço desejado.
     */
-    public List<Win> Run(List<string> listKeys, List<string> listAddress, bool log)
+    public List<Win> Run(List<string> listKeys, List<string> listAddress)
     {
         List<Win> finded = new List<Win>();
-        int i = 0;
         foreach (var key in listKeys)
         {
             try
@@ -21,20 +20,6 @@ public class PrivateKeyGenerate
                 string wifPrivateKey = KeyUtils.PrivateKeyToWIF(key); // Importa na carteira para movimentar, se der certo precisa dessa chave
                 byte[] publicKeyCompressed = KeyUtils.PrivateKeyToCompressedPublicKey(privateKeyHex);
                 string addressGenerated = KeyUtils.PublicKeyToLegacyCompressedAddress(publicKeyCompressed);
-                if ("0000000000000000000000000000000000000000000000000000000000000001" == privateKeyHex)
-                {
-                    Debug.Log(privateKeyHex);
-                    Debug.Log(publicKeyCompressed);
-                    Debug.Log(addressGenerated);
-                    //Debug.Log(address);
-                }
-                if ("0000000000000000000000000000000000000000000000000000000000000003" == privateKeyHex)
-                {
-                    Debug.Log(privateKeyHex);
-                    Debug.Log(publicKeyCompressed);
-                    Debug.Log(addressGenerated);
-                    //Debug.Log(address);
-                }
 
                 foreach (var address in listAddress)
                 {
@@ -63,9 +48,6 @@ public class PrivateKeyGenerate
                 Debug.LogError($"Erro geral: {ex.Message}");
             }
         }
-
-        // Retorno caso não encontre a chave
-        //Debug.Log("Nenhuma chave válida encontrada.");
         return finded;
     }
 
@@ -113,7 +95,7 @@ public class PrivateKeyGenerate
         {
             try
             {
-                Run(new List<string> { item.Key }, new List<string> { item.Value }, false);
+                Run(new List<string> { item.Key }, new List<string> { item.Value });
             }
             catch (Exception ex)
             {

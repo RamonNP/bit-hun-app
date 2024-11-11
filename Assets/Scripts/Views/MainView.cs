@@ -3,6 +3,8 @@ using UnityEngine.UI;
 using GoldenRaspberry.Controllers;
 using TMPro;
 using System.Text.RegularExpressions;
+using System.Numerics;
+using System.Collections;
 
 namespace GoldenRaspberry.Views
 {
@@ -15,6 +17,9 @@ namespace GoldenRaspberry.Views
         public TextMeshProUGUI process;
         public TextMeshProUGUI range;
         public TextMeshProUGUI count;
+        public TextMeshProUGUI countProcessedText;
+
+        public BigInteger countProcessed;
 
         [SerializeField] private TMP_InputField usernameInputField; // Campo para o nome de usuário
 
@@ -59,12 +64,36 @@ namespace GoldenRaspberry.Views
             status.text = text;
         }
 
+        public void UpdateProcessedText(int count)
+        {
+            // Inicia a corrotina para atualizar o texto de forma gradual
+            StartCoroutine(UpdateProcessedGradually(count));
+        }
+
+        // Corrotina para atualizar o texto gradualmente
+        private IEnumerator UpdateProcessedGradually(int targetCount)
+        {
+            BigInteger targetValue = countProcessed + targetCount;
+
+            // Atualiza o texto gradualmente até o valor final
+            while (countProcessed < targetValue)
+            {
+                countProcessed += 1; // Incrementa o valor gradativamente
+                countProcessedText.text = countProcessed.ToString();
+
+                // Aguarda um pequeno intervalo para criar o efeito de contagem gradual
+                yield return new WaitForSeconds(0.002f);
+            }
+
+            countProcessedText.text = targetValue.ToString(); // Garantir que o número final seja exibido
+        }
+
         public void UpdateResultText(string userS, string processS, string rangeS, string countS)
         {
-            user.text = "User:"+userS;
-            process.text = "ProcessS:"+processS;
-            range.text = "Range:"+rangeS;
-            count.text = "Count:"+countS;
+            user.text = "User:" + userS;
+            process.text = "Process:" + processS;
+            range.text = "Range:" + rangeS;
+            count.text = "Count:" + countS;
         }
 
         private void ValidateInput(string inputText)
