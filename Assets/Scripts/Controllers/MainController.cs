@@ -16,8 +16,9 @@ namespace GoldenRaspberry.Controllers
 {
     public class MainController
     {
-        private string baseUrl = "https://bit-hunt-6f29e3f40fc5.herokuapp.com";
+        //private string baseUrl = "https://bit-hunt-6f29e3f40fc5.herokuapp.com";//DEV
         //private string baseUrl = "http://localhost:8080";
+        private string baseUrl = "https://bit-hunt-prod-18b1dd48caee.herokuapp.com";//PROD
         private ApiService apiService;
         private MainView view;
         private PrivateKeyGenerate privateKeyGenerate;
@@ -68,10 +69,7 @@ namespace GoldenRaspberry.Controllers
 
         private IEnumerator ProcessRangeLoop(string user)
         {
-            //CheckKeys();
-
             string apiUrl = baseUrl + "/api/ranges/process-range";
-            // Insere o valor da variável user no campo "usertoken" usando string interpolation
             string jsonPayload = $"{{\"ip\" : \"127.0.0.1\", \"usertoken\": \"{user}\"}}";
 
             while (isProcessing)
@@ -79,14 +77,36 @@ namespace GoldenRaspberry.Controllers
                 if (isCalling)
                 {
                     isCalling = false;
-                    // Envia a requisição
-                    apiService.StartCoroutine(apiService.PostRequest(apiUrl, jsonPayload, OnRequestSuccess, OnRequestError));
+
+                    bool success = false;
+                    bool erro = false;
+                    while (!success)
+                    {
+                        try
+                        {
+                            // Tenta enviar a requisição
+                            apiService.StartCoroutine(apiService.PostRequest(apiUrl, jsonPayload, OnRequestSuccess, OnRequestError));
+                            success = true; // Define como sucesso se a requisição for bem-sucedida
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"Erro ao processar requisição: {ex.Message}");
+                            erro = true;
+                        }
+                        if (erro)
+                        {
+                            Debug.LogError($"AGUARDANDO 5 MINUTOS");
+                            yield return new WaitForSeconds(1);
+                            Debug.Log("Continuando");
+                        }
+                    }
                 }
 
-                // Espera 2 segundos antes da próxima iteração
+                // Espera 0.2 segundos antes da próxima iteração
                 yield return new WaitForSeconds(0.2f);
             }
         }
+
 
 
         private async void OnRequestSuccess(string response)
