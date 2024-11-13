@@ -37,7 +37,7 @@ namespace GoldenRaspberry.Controllers
             if (!isProcessing)
             {
                 isProcessing = true;
-                view.UpdateResultText("Process...");
+                view.UpdateResultText("Processing...");
                 apiService.StartCoroutine(ProcessRangeLoop(user));
             }
         }
@@ -76,15 +76,18 @@ namespace GoldenRaspberry.Controllers
             {
                 if (isCalling)
                 {
+                    //Debug.Log("isProcessing " + isProcessing + " isCalling " + isCalling);
                     isCalling = false;
 
                     bool success = false;
                     bool erro = false;
+                    //Debug.Log("success " + success);
                     while (!success)
                     {
                         try
                         {
                             // Tenta enviar a requisição
+                            //Debug.Log("apiService.StartCoroutine ");
                             apiService.StartCoroutine(apiService.PostRequest(apiUrl, jsonPayload, OnRequestSuccess, OnRequestError));
                             success = true; // Define como sucesso se a requisição for bem-sucedida
                         }
@@ -150,10 +153,18 @@ namespace GoldenRaspberry.Controllers
             //TODO QUANDO CHEGAR AQUI Spownar na tela um objeto que vou arratar para o campo, mostre apenas alteração
 
         }
-
         private void OnRequestError(string error)
         {
-            view.UpdateResultText("Erro: " + error);
+            view.UpdateResultText("Reconnecting... Erro: " + error);
+            apiService.StartCoroutine(WaitAndRetry());
+        }
+
+        private IEnumerator WaitAndRetry()
+        {
+            // Aguarda 50 segundos antes de redefinir isCalling
+            yield return new WaitForSeconds(60);
+            view.UpdateResultText("Processing...");
+            isCalling = true;
         }
 
         private List<string> ListPrivateKeys(string keyBase, int numberKeys, bool log)
@@ -198,15 +209,9 @@ namespace GoldenRaspberry.Controllers
 
             BigInteger testeFinal = new BigInteger(teste, 16);
 
-            //Debug.Log("finalBigInt "+teste+" final  "+testeFinal );
-
             apiResponse.finalRange = KeyUtils.IncrementHexValueWithOutZeroLeft(apiResponse.initialRange, apiResponse.quantity);
 
             BigInteger finalBigInt = new BigInteger(apiResponse.finalRange, 16);
-
-            //string hashValidate = combinedRange;//CalculateSHA256Hash(apiResponse.finalRange);
-
-            //Debug.Log("ID " + apiResponse.id + " Inicial: " + apiResponse.initialRange + " Final: " + apiResponse.finalRange + " Hash: " + hashValidate);
 
             apiResponse.finalRange = apiResponse.finalRange.TrimStart('0');
             string noWinApiUrl = baseUrl + "/api/ranges/results";
@@ -217,7 +222,7 @@ namespace GoldenRaspberry.Controllers
             //Debug.Log("finalBigInt " + finalBigInt + " final  " + apiResponse.finalRange + " ----" + jsonPayload);
             apiService.StartCoroutine(apiService.PostRequest(noWinApiUrl, jsonPayload,
                 success => { },
-                error => Debug.LogError("Erro ao enviar dados de não-vencedor: " + error)
+                error => { Debug.LogError("Erro ao enviar dados de não-vencedor: " + error); }
             ));
         }
 
