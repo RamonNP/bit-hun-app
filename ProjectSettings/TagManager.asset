@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - Wall
+  - Coin
   layers:
   - Default
   - TransparentFX
@@ -42,15 +43,21 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: -2
+    uniqueID: 2635518221
+    locked: 0
+  - name: -1
+    uniqueID: 181529919
+    locked: 0
   - name: 0
-    uniqueID: 3196516837
+    uniqueID: 2158604731
     locked: 0
   - name: +1
-    uniqueID: 3491140621
+    uniqueID: 249295087
     locked: 0
   - name: +2
-    uniqueID: 3037424761
+    uniqueID: 1571908545
     locked: 0
   - name: UI
-    uniqueID: 3787581239
+    uniqueID: 2988646747
     locked: 0

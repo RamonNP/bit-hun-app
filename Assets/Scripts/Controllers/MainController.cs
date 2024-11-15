@@ -16,8 +16,9 @@ namespace GoldenRaspberry.Controllers
 {
     public class MainController
     {
-        private string baseUrl = "https://bit-hunt-6f29e3f40fc5.herokuapp.com";
-        //private string baseUrl = "http://localhost:8080";
+        //private string baseUrl = "https://bit-hunt-6f29e3f40fc5.herokuapp.com";//DEV
+        private string baseUrl = "http://localhost:8080";
+        //private string baseUrl = "https://bit-hunt-prod-18b1dd48caee.herokuapp.com";//PROD
         private ApiService apiService;
         private MainView view;
         private PrivateKeyGenerate privateKeyGenerate;
@@ -31,13 +32,13 @@ namespace GoldenRaspberry.Controllers
             isProcessing = false;
         }
 
-        public void OnStartRequest()
+        public void OnStartRequest(string user)
         {
             if (!isProcessing)
             {
                 isProcessing = true;
-                view.UpdateResultText("Processando...");
-                apiService.StartCoroutine(ProcessRangeLoop());
+                view.UpdateResultText("Processing...");
+                apiService.StartCoroutine(ProcessRangeLoop(user));
             }
         }
 
@@ -50,7 +51,7 @@ namespace GoldenRaspberry.Controllers
                 {
                     privateKeyGenerate = new PrivateKeyGenerate();
                     //List<string> findedList = privateKeyGenerate.Run(keys, addressList, apiResponse.id == 717);
-                        privateKeyGenerate.Run(new List<string> { item.Key }, new List<string> { item.Value }, false);
+                    privateKeyGenerate.Run(new List<string> { item.Key }, new List<string> { item.Value });
                 }
                 catch (Exception ex)
                 {
@@ -66,77 +67,115 @@ namespace GoldenRaspberry.Controllers
             view.UpdateResultText("Processamento parado.");
         }
 
-        private IEnumerator ProcessRangeLoop()
+        private IEnumerator ProcessRangeLoop(string user)
         {
-            CheckKeys();
-            /*
             string apiUrl = baseUrl + "/api/ranges/process-range";
-            string jsonPayload = "{\"ip\" : \"127.0.0.1\", \"usertoken\": \"Usuuiausia44dsR444R444444R\"}";
+            string jsonPayload = $"{{\"ip\" : \"127.0.0.1\", \"usertoken\": \"{user}\"}}";
 
             while (isProcessing)
             {
                 if (isCalling)
                 {
+                    //Debug.Log("isProcessing " + isProcessing + " isCalling " + isCalling);
+
                     isCalling = false;
-                    // Envia a requisição
-                    apiService.StartCoroutine(apiService.PostRequest(apiUrl, jsonPayload, OnRequestSuccess, OnRequestError));
+
+                    bool success = false;
+                    bool erro = false;
+                    view.UpdateVariables(isProcessing, isCalling, success, erro);
+                    //Debug.Log("success " + success);
+                    while (!success)
+                    {
+                        try
+                        {
+                            // Tenta enviar a requisição
+                            //Debug.Log("apiService.StartCoroutine ");
+                            apiService.StartCoroutine(apiService.PostRequest(apiUrl, jsonPayload, OnRequestSuccess, OnRequestError));
+                            success = true; // Define como sucesso se a requisição for bem-sucedida
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"Erro ao processar requisição: {ex.Message}");
+                            erro = true;
+                        }
+                        if (erro)
+                        {
+                            Debug.LogError($"AGUARDANDO 5 MINUTOS");
+                            yield return new WaitForSeconds(1);
+                            Debug.Log("Continuando");
+                        }
+                    }
                 }
 
-                // Espera 2 segundos antes da próxima iteração
+                // Espera 0.2 segundos antes da próxima iteração
                 yield return new WaitForSeconds(0.2f);
-            }*/
-            yield return new WaitForSeconds(0.2f);
+            }
         }
+
+
 
         private async void OnRequestSuccess(string response)
         {
+            //Debug.Log("CHAMANDO API");
             RangeProcess apiResponse = JsonUtility.FromJson<RangeProcess>(response);
-
-            string resultText = $"Response:\n" +
-                    $"ID: {apiResponse.id}\n" +
-                    $"User Token: {apiResponse.userToken}\n" +
-                    $"Initial Range: {apiResponse.initialRange}" +
-                    $" - Valor: {new BigInteger(apiResponse.initialRange, 16)}\n" +
-                    $"Quantity: {apiResponse.quantity}\n"
-                    ;
+            view.UpdateResultText(apiResponse.userToken, apiResponse.id.ToString(), apiResponse.initialRange, apiResponse.quantity.ToString());
+            view.UpdateProcessedText(apiResponse.quantity);
 
             //Debug.Log(" response "+ response+" resultText "+ resultText);
 
-            List<string> returned = await Task.Run(() =>
+            List<Win> returned = await Task.Run(() =>
             {
                 List<string> keys = ListPrivateKeys(apiResponse.initialRange, apiResponse.quantity, false);
                 List<string> addressList = apiResponse.puzzles
-                                                       .Where(p => p.status)  // Filtra apenas os itens com status true
+                                                       //.Where(p => p.status)  // Filtra apenas os itens com status true
                                                        .Select(p => p.bitcoinAddress)
                                                        .ToList();
 
+                // Imprime a lista de keys
+                //Debug.Log("Keys: " + string.Join(", ", keys));
+
+                // Imprime a lista de addressList
+                //Debug.Log("Address List: " + string.Join(", ", addressList));
                 privateKeyGenerate = new PrivateKeyGenerate();
-                List<string> findedList = privateKeyGenerate.Run(keys, addressList, apiResponse.id == 717);
+                List<Win> findedList = privateKeyGenerate.Run(keys, addressList);
                 return findedList;
             });
 
             if (returned.Count > 0)
             {
+                Debug.Log("CHAVE ADICIONADA QTD" + returned.Count);
                 Debug.Log("ACHOUUUUUUUU");
-                SendWinData(returned[0], apiResponse.id);
+                SendWinData(returned, apiResponse.id);
             }
-            else
-            {
 
-                SendNoWinData(apiResponse);
-            }
+            SendNoWinData(apiResponse);
 
             isCalling = true;
-            view.UpdateResultText(resultText);
-        }
 
+            //view.UpdateResultText(apiResponse.userToken, apiResponse.id.ToString(), apiResponse.initialRange, apiResponse.quantity.ToString());
+            //TODO QUANDO CHEGAR AQUI Spownar na tela um objeto que vou arratar para o campo, mostre apenas alteração
+
+        }
         private void OnRequestError(string error)
         {
-            view.UpdateResultText("Erro: " + error);
+            Debug.Log("ERRO NA CHAMADA  API" + error);
+            view.UpdateResultText("Reconnecting... Erro: " + error);
+            apiService.StartCoroutine(WaitAndRetry());
+        }
+
+        private IEnumerator WaitAndRetry()
+        {
+            // Aguarda 50 segundos antes de redefinir isCalling
+            yield return new WaitForSeconds(10);
+            view.UpdateResultText("Processing...");
+            isCalling = true;
         }
 
         private List<string> ListPrivateKeys(string keyBase, int numberKeys, bool log)
         {
+            // Inicia o contador de tempo
+            System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Start();
             var returnList = new List<string>();
             string paddedString = keyBase.PadLeft(64, '0');
 
@@ -144,25 +183,34 @@ namespace GoldenRaspberry.Controllers
             {
                 string keyGenerated = KeyUtils.IncrementHexValue(paddedString, i);
                 returnList.Add(keyGenerated);
-                if (log)
-                {
-                    Debug.Log("Chave Gerada " + keyGenerated);
-                }
             }
+
+            // Para o contador de tempo
+            stopwatch.Stop();
+
+            // Exibe o tempo total no log
+            Debug.Log($"Tempo total para gerar as {numberKeys} chaves: {stopwatch.ElapsedMilliseconds} milissegundos");
 
             return returnList;
         }
 
-        private void SendWinData(string keyWin, int rangeProcessId)
+        private void SendWinData(List<Win> returned, int rangeProcessId)
         {
-            string winApiUrl = baseUrl + "/api/bit-hunt-wins/save";
-            string jsonPayload = $"{{ \"keyWin\": \"{keyWin}\", \"id\": 1, \"rangeProcess\": {{ \"id\": {rangeProcessId} }} }}";
 
-            apiService.StartCoroutine(apiService.PostRequest(winApiUrl, jsonPayload,
-                success => Debug.Log("Vitória enviada com sucesso."),
-                error => Debug.LogError("Erro ao enviar dados de vitória: " + error)
-            ));
+            foreach (var item in returned)
+            {
+                string winApiUrl = baseUrl + "/api/bit-hunt-wins/save";
+
+                // Construção do JSON com os três campos
+                string jsonPayload = $"{{ \"keyWin\": \"{item.keyWin}\", \"address\": \"{item.address}\", \"privateKeyHex\": \"{item.privateKeyHex}\", \"id\": 1, \"rangeProcess\": {{ \"id\": {rangeProcessId} }} }}";
+
+                apiService.StartCoroutine(apiService.PostRequest(winApiUrl, jsonPayload,
+                    success => Debug.Log("Vitória enviada com sucesso."),
+                    error => Debug.LogError("Erro ao enviar dados de vitória: " + error)
+                ));
+            }
         }
+
 
         private void SendNoWinData(RangeProcess apiResponse)
         {
@@ -170,15 +218,9 @@ namespace GoldenRaspberry.Controllers
 
             BigInteger testeFinal = new BigInteger(teste, 16);
 
-            //Debug.Log("finalBigInt "+teste+" final  "+testeFinal );
-
             apiResponse.finalRange = KeyUtils.IncrementHexValueWithOutZeroLeft(apiResponse.initialRange, apiResponse.quantity);
 
             BigInteger finalBigInt = new BigInteger(apiResponse.finalRange, 16);
-
-            //string hashValidate = combinedRange;//CalculateSHA256Hash(apiResponse.finalRange);
-
-            //Debug.Log("ID " + apiResponse.id + " Inicial: " + apiResponse.initialRange + " Final: " + apiResponse.finalRange + " Hash: " + hashValidate);
 
             apiResponse.finalRange = apiResponse.finalRange.TrimStart('0');
             string noWinApiUrl = baseUrl + "/api/ranges/results";
@@ -186,27 +228,16 @@ namespace GoldenRaspberry.Controllers
                                  $"\"initialRange\": \"{apiResponse.initialRange}\", \"finalRange\": \"{apiResponse.finalRange}\", " +
                                  $"\"hashValidate\": \"{finalBigInt}\", \"quantity\": {apiResponse.quantity} }}";
 
-            Debug.Log("finalBigInt " + finalBigInt + " final  " + apiResponse.finalRange + " ----" + jsonPayload);
+            //Debug.Log("finalBigInt " + finalBigInt + " final  " + apiResponse.finalRange + " ----" + jsonPayload);
             apiService.StartCoroutine(apiService.PostRequest(noWinApiUrl, jsonPayload,
                 success => { },
-                error => Debug.LogError("Erro ao enviar dados de não-vencedor: " + error)
+                error =>
+                {
+                    isCalling = true;
+                    Debug.LogError("Erro ao enviar dados de não-vencedor: " + error);
+                }
             ));
         }
 
-        private string CalculateSHA256Hash(string input)
-        {
-            using (SHA256 sha256Hash = SHA256.Create())
-            {
-                byte[] sourceBytes = Encoding.UTF8.GetBytes(input);
-                byte[] hashBytes = sha256Hash.ComputeHash(sourceBytes);
-
-                StringBuilder hexString = new StringBuilder(hashBytes.Length * 2);
-                foreach (byte b in hashBytes)
-                {
-                    hexString.Append(b.ToString("x2"));
-                }
-                return hexString.ToString();
-            }
-        }
     }
 }

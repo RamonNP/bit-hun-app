@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using GoldenRaspberry.Models;
 using UnityEngine;
 
 public class PrivateKeyGenerate
@@ -8,9 +9,9 @@ public class PrivateKeyGenerate
     /*
         Método que valida a chave privada para descobrir se ela corresponde a um endereço desejado.
     */
-    public List<string> Run(List<string> listKeys, List<string> listAddress, bool log)
+    public List<Win> Run(List<string> listKeys, List<string> listAddress)
     {
-        List<string> finded = new List<string>();
+        List<Win> finded = new List<Win>();
         foreach (var key in listKeys)
         {
             try
@@ -22,10 +23,6 @@ public class PrivateKeyGenerate
 
                 foreach (var address in listAddress)
                 {
-                    if (log)
-                    {
-                        Debug.Log("KEY "+key+" PROCURANDO " + address+ " addressGenerated " + addressGenerated+ " publicKeyCompressed " + publicKeyCompressed+ " addressGenerated " + addressGenerated);
-                    }
 
                     if (address.Equals(addressGenerated))
                     {
@@ -33,7 +30,12 @@ public class PrivateKeyGenerate
                         // ENVIAR ISSO -> wifPrivateKey
                         Debug.Log($"Chave válida encontrada! WIF: {wifPrivateKey}");
                         //return; // Opcional: sair da função ao encontrar uma chave válida
-                        finded.Add(wifPrivateKey);
+                        Win win = new Win();
+                        win.keyWin = wifPrivateKey;
+                        win.address = address;
+                        win.privateKeyHex = privateKeyHex;
+                        finded.Add(win);
+                        Debug.Log("CHAVE ADICIONADA");
                     }
                 }
             }
@@ -46,9 +48,6 @@ public class PrivateKeyGenerate
                 Debug.LogError($"Erro geral: {ex.Message}");
             }
         }
-
-        // Retorno caso não encontre a chave
-        //Debug.Log("Nenhuma chave válida encontrada.");
         return finded;
     }
 
@@ -96,7 +95,7 @@ public class PrivateKeyGenerate
         {
             try
             {
-                Run(new List<string> { item.Key }, new List<string> { item.Value }, false);
+                Run(new List<string> { item.Key }, new List<string> { item.Value });
             }
             catch (Exception ex)
             {

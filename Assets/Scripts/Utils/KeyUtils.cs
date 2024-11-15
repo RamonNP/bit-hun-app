@@ -77,7 +77,7 @@ public class KeyUtils
         var privateKey = new Key(privateKeyBytes);
 
         // Gera a chave pública comprimida a partir da chave privada
-        var pubKey = privateKey.PubKey;
+        //var pubKey = privateKey.PubKey;
 
         // Cria o formato WIF com a chave privada e indica a compressão
         var wif = privateKey.GetWif(Network.Main);
